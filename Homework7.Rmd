@@ -1,0 +1,114 @@
+---
+title: "Homework7"
+author: "LeTicia Cancel"
+date: "10/10/2020"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+    df_print: paged 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries
+```{r warning=FALSE, message=FALSE}
+library(RCurl)
+library(xml2)
+library(dplyr)
+library(tidyr)
+library(jsonlite)
+library(rvest)
+```
+
+# Import Data
+
+Get all 3 book files from GitHub
+```{r}
+#Book 1 - XML file
+xmlFile <- "https://raw.githubusercontent.com/ltcancel/Homework7_Data607_F20/main/Book1.xml"
+book1 <- read_xml(xmlFile)
+
+#Book 2 - HTML file
+htmlFile <- "https://raw.githubusercontent.com/ltcancel/Homework7_Data607_F20/main/Book2.html"
+book2 <- read_html(htmlFile)
+
+#Book 3 - Json file
+jsonFile <- "https://raw.githubusercontent.com/ltcancel/Homework7_Data607_F20/main/Book3.json"
+book3 <- fromJSON(jsonFile)
+```
+
+# Create dataframes
+
+## Book 1 - XML File
+```{r}
+# Original file from GitHub
+book1
+
+# get each part of the book's information from the xml file
+book1_title <- xml_text(xml_find_all(book1,"//title"))
+book1_author <- xml_text(xml_find_all(book1,"//author"))
+book1_pages <- xml_text(xml_find_all(book1,"//pages"))
+book1_isbn <- xml_text(xml_find_all(book1,"//ISBN-13"))
+book1_pub <- xml_text(xml_find_all(book1,"//publisher"))
+
+# combine each xml part to form a dataframe 
+book1_df <- cbind(book1_title,book1_author,book1_pages,book1_isbn,book1_pub)
+
+book1_df <- as.data.frame(book1_df)
+
+# final dataframe
+book1_df
+```
+## Book 2 - HTML File
+```{r}
+# original file from GitHub
+book2
+
+# get book information from the HTML file
+book2_df <- book2 %>% 
+  html_nodes("table") %>%
+  html_table(fill = TRUE)
+
+book2_df
+
+# convert list to dataframe
+book2_df <- as.data.frame(book2_df)
+
+book2_df
+
+# spread dataframe so each element is a column
+book2_df <- book2_df %>%
+  spread(X1, X2)
+
+# final dataframe
+book2_df
+```
+
+## Book 3 - Json File
+```{r}
+# original file 
+book3
+
+# get book information from Json file
+book3_df <- do.call("rbind",book3)
+book3_df
+
+# convert matrix to dataframe
+book3_df <- as.data.frame(book3_df)
+book3_df
+
+# the matrix used the Json tags as row names. we need to convert the row names to a column
+book3_df <- tibble::rownames_to_column(book3_df,"Book")
+book3_df
+
+# spread dataframe so each element is a column
+book3_df <- book3_df %>% spread(Book, V1)
+
+# final dataframe
+book3_df
+```
+
